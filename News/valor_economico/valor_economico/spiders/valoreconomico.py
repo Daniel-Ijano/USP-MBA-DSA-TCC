@@ -7,30 +7,29 @@ from ..support import get_data_json_response
 class ValoreconomicoSpider(scrapy.Spider):
     name = 'valoreconomico'
     page = 1
-    hash_financas = "72f0952e-8b6b-4706-b734-07dcaec11919"
-    hash_politica = "2a02f1ee-5dba-4ff3-bbf7-76a2d139e1a5"
-    URLS_API = "https://falkor-cda.bastian.globo.com/tenants/valor/instances/{category}/posts/page/{page}".format
+    category_financas = "72f0952e-8b6b-4706-b734-07dcaec11919"
+    category_politica = "2a02f1ee-5dba-4ff3-bbf7-76a2d139e1a5"
+    BASE_URL = "https://falkor-cda.bastian.globo.com/tenants/valor/instances/{category}/posts/page/{page}".format
     
     start_urls = [
-        URLS_API(category=hash_financas, page=str(page)),
-        URLS_API(category=hash_politica, page=str(page))
+        BASE_URL(category=category_financas, page=str(page)),
+        BASE_URL(category=category_politica, page=str(page))
         ] 
     
     def parse(self, response):
-        # From items.py
         items = ValorEconomicoItem()
         response_json = get_data_json_response(response)
 
-        hash = response_json.get("id")
-        json_list = response_json.get("items", [{}])
+        category = response_json.get("id")
+        news_list = response_json.get("items", [{}])
 
         # End spider if the page does not contains any news
-        if not json_list:
+        if not news_list:
             print("\n","\n", ">>>>> No news found: ", response, "\n","\n")
             return
 
         # Iterating one at a time
-        for news in json_list:
+        for news in news_list:
             source = "Valor Econômico"
             section = news.get("content").get("section")
             publication = news.get("publication")
@@ -49,7 +48,7 @@ class ValoreconomicoSpider(scrapy.Spider):
 
         # Pagination
         self.page += 1
-        next_page = self.URLS_API(category = hash, page=self.page)
+        next_page = self.BASE_URL(category = category, page=self.page)
         yield response.follow(next_page, callback=self.parse)
 
 

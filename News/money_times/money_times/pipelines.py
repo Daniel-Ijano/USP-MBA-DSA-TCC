@@ -8,8 +8,7 @@
 from itemadapter import ItemAdapter
 import mysql.connector
 
-class ValorEconomicoPipeline:
-
+class MoneyTimesPipeline:
     def __init__(self):
         self.create_connection()
         self.create_table()
@@ -53,3 +52,4 @@ class ValorEconomicoPipeline:
 
     def __del__(self):
         self.conn.close()
+
