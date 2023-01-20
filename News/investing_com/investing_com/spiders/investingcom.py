@@ -1,6 +1,8 @@
 import scrapy
 from ..items import InvestingComItem
 
+# cd USP-MBA-DSA-TCC/News/investing_com/investing_com
+
 class InvestingcomSpider(scrapy.Spider):
     name = 'investingcom'
     page = 1
