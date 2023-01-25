@@ -3,6 +3,7 @@ from ..items import ValorEconomicoItem
 from ..support import get_data_json_response
 
 # cd USP-MBA-DSA-TCC/News/valor_economico/valor_economico
+# scrapy crawl valoreconomico
 
 class ValoreconomicoSpider(scrapy.Spider):
     name = 'valoreconomico'
