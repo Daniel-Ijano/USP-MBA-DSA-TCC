@@ -1,4 +1,5 @@
 import scrapy
+from datetime import datetime
 from ..items import ValorEconomicoItem
 from ..support import get_data_json_response
 
@@ -33,7 +34,8 @@ class ValoreconomicoSpider(scrapy.Spider):
         for news in news_list:
             source = "Valor Econômico"
             section = news.get("content").get("section")
-            publication = news.get("publication")
+            publication = news.get("publication")[:10]
+            collected_at = datetime.today().strftime('%Y-%m-%d')
             title = news.get("content").get("title")
             summary = news.get("content").get("summary")
             url = news.get("content").get("url")
@@ -42,6 +44,7 @@ class ValoreconomicoSpider(scrapy.Spider):
             items['source'] = source
             items['section'] = section
             items['publication'] = publication
+            items['collected_at'] = collected_at
             items['title'] = title
             items['summary'] = summary
             items['url'] = url
@@ -54,5 +57,7 @@ class ValoreconomicoSpider(scrapy.Spider):
 
 
 # NEXT:
-# 1- Parse date******
 # 2- Ver se irá adicionar mais categorias
+
+# xpath news body: "//p[contains(@class,'content-text__container')]"
+# xpath news correct publication: "//time[@itemprop='datePublished']/text()"

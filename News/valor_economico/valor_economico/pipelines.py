@@ -13,7 +13,7 @@ import cx_Oracle
 class ValorEconomicoPipeline:
     def __init__(self):
         self.create_connection()
-        # self.create_table()
+        #self.create_table()
 
     def create_connection(self):
         # self.conn = mysql.connector.connect(
@@ -46,6 +46,7 @@ class ValorEconomicoPipeline:
             source VARCHAR2 (50) NOT NULL
             , section VARCHAR2 (20) NOT NULL
             , publication VARCHAR2 (50) NOT NULL
+            , collected_at VARCHAR2 (50) NOT NULL
             , title VARCHAR2 (500) NOT NULL
             , summary VARCHAR2 (1000)
             , url VARCHAR2 (200) NOT NULL
@@ -76,7 +77,7 @@ class ValorEconomicoPipeline:
 
         query = """
             INSERT INTO tb_news_TEMP
-            VALUES (:source, :section, :publication, :title, :summary, :url)
+            VALUES (:source, :section, :publication, :collected_at, :title, :summary, :url)
         """
         #(source, section, publication, title, summary, url)
         self.curr.execute(
@@ -84,6 +85,7 @@ class ValorEconomicoPipeline:
             source=item["source"],
             section=item["section"],
             publication=item["publication"],
+            collected_at=item["collected_at"],
             title=item["title"],
             summary=item["summary"],
             url=item["url"],

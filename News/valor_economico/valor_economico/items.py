@@ -12,6 +12,7 @@ class ValorEconomicoItem(scrapy.Item):
     source = scrapy.Field()
     section = scrapy.Field()
     publication = scrapy.Field()
+    collected_at = scrapy.Field()
     title = scrapy.Field()
     summary = scrapy.Field()
     url = scrapy.Field()
