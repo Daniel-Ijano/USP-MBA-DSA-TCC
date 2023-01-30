@@ -1,3 +1,4 @@
+import hashlib
 import scrapy
 from datetime import datetime
 from ..items import ValorEconomicoItem
@@ -37,16 +38,19 @@ class ValoreconomicoSpider(scrapy.Spider):
             publication = news.get("publication")[:10]
             collected_at = datetime.today().strftime('%Y-%m-%d')
             title = news.get("content").get("title")
-            summary = news.get("content").get("summary")
+            body = news.get("content").get("summary")
             url = news.get("content").get("url")
 
+            publication_id = source + collected_at + body + url
+
             # Send items
+            items['publication_id'] = hashlib.md5(publication_id.encode()).hexdigest()
             items['source'] = source
             items['section'] = section
             items['publication'] = publication
             items['collected_at'] = collected_at
             items['title'] = title
-            items['summary'] = summary
+            items['body'] = body
             items['url'] = url
             yield items
 

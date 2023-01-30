@@ -36,19 +36,20 @@ class ValorEconomicoPipeline:
         #     , section text
         #     , publication text
         #     , title text
-        #     , summary text
+        #     , body text
         #     , url text
         #     )
         #     """
 
         query = """
             CREATE TABLE tb_news_TEMP(
-            source VARCHAR2 (50) NOT NULL
+            publication_id VARCHAR2 (64) NOT NULL
+            , source VARCHAR2 (50) NOT NULL
             , section VARCHAR2 (20) NOT NULL
             , publication VARCHAR2 (50) NOT NULL
             , collected_at VARCHAR2 (50) NOT NULL
             , title VARCHAR2 (500) NOT NULL
-            , summary VARCHAR2 (1000)
+            , body VARCHAR2 (10000)
             , url VARCHAR2 (200) NOT NULL
             )
             """
@@ -70,24 +71,25 @@ class ValorEconomicoPipeline:
         #         item["section"],
         #         item["publication"],
         #         item["title"],
-        #         item["summary"],
+        #         item["body"],
         #         item["url"],
         #     ),
         # )
 
         query = """
             INSERT INTO tb_news_TEMP
-            VALUES (:source, :section, :publication, :collected_at, :title, :summary, :url)
+            VALUES (:publication_id, :source, :section, :publication, :collected_at, :title, :body, :url)
         """
-        #(source, section, publication, title, summary, url)
+        #(source, section, publication, title, body, url)
         self.curr.execute(
             query,
+            publication_id=item["publication_id"],
             source=item["source"],
             section=item["section"],
             publication=item["publication"],
             collected_at=item["collected_at"],
             title=item["title"],
-            summary=item["summary"],
+            body=item["body"],
             url=item["url"],
         )
 
