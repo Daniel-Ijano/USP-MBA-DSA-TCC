@@ -43,7 +43,7 @@ class ValorEconomicoPipeline:
 
         query = """
             CREATE TABLE tb_news_TEMP(
-            publication_id VARCHAR2 (64) NOT NULL
+            publication_id VARCHAR2 (32) NOT NULL
             , source VARCHAR2 (50) NOT NULL
             , section VARCHAR2 (20) NOT NULL
             , publication VARCHAR2 (50) NOT NULL
