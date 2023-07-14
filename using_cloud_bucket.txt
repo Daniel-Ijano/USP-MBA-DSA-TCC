@@ -1,0 +1,5 @@
+Oracle Cloud (oci):
+https://blogs.oracle.com/cloud-infrastructure/post/uploading-whole-directories-oracle-object-storage-using-a-python-script
+
+AWS (boto3):
+https://realpython.com/python-boto3-aws-s3/
