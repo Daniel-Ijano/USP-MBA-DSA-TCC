@@ -11,6 +11,8 @@ class CobasiItem(scrapy.Item):
     # name = scrapy.Field()
     collected_at = scrapy.Field()
     source = scrapy.Field()
+    specie = scrapy.Field()
+    category = scrapy.Field()
     brand = scrapy.Field()
     rating = scrapy.Field()
     url = scrapy.Field()

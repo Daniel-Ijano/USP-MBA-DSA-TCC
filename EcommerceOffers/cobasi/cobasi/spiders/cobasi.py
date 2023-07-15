@@ -2,6 +2,7 @@ import scrapy
 
 from datetime import datetime
 from ..items import CobasiItem
+from scrapy.http import Request
 from ..support import get_data_json_response
 
 # cd USP-MBA-DSA-TCC/EcommerceOffers/cobasi/cobasi
@@ -11,21 +12,30 @@ class CobasiSpider(scrapy.Spider):
     name = 'cobasi'
     allowed_domains = ['cobasi.com.br']
 
-    CATEGORIES_API = (
-        "https://mid-back.cobasi.com.br/catalog/products/categories/{category}?"
-        "orderBy=OrderByTopSaleDESC&page={page}&pageSize=50"
-    ).format
+    def start_requests(self):
+        CATEGORIES_API = (
+            "https://mid-back.cobasi.com.br/catalog/products/categories/{specie}/{category}?"
+            "orderBy=OrderByTopSaleDESC&page={page}&pageSize=50"
+        ).format
 
-    page = 1
+        page = 1
 
-    # Categories
-    cat_cachorro_racao_seca = "cachorro/racao/racao-seca"
-    cat_gatos_racao_seca = "gatos/racao/racao-seca"
+        # Species
+        species = ["gatos", "cachorro"]
 
-    start_urls = [
-        CATEGORIES_API(category=cat_cachorro_racao_seca, page=str(page)),
-        CATEGORIES_API(category=cat_gatos_racao_seca, page=str(page))
-    ]
+        # Categories
+        categories = ["racao/racao-seca", "racao/racao-umida"]
+
+        start_urls = []
+        for specie in species:
+            for category in categories:
+                req = Request(
+                    url=CATEGORIES_API(specie=specie, category=category, page=str(page)),
+                    meta={'specie': specie, 'category': category},
+                    callback=self.parse
+                )
+                start_urls.append(req)
+        return start_urls
 
     def parse(self, response):
         items = CobasiItem()
@@ -37,16 +47,16 @@ class CobasiSpider(scrapy.Spider):
             print("\n","\n", ">>>>> No offer found: ", response, "\n","\n")
             return
 
-        category = response_json.get("id")
-
         # Iterating one at a time
         for offer in offers_list:
             items['collected_at'] = datetime.today().strftime('%Y-%m-%d')
             items['source'] = "Cobasi"
+            items['specie'] = response.meta.get('specie').capitalize()
+            items['category'] = response.meta.get('category').split("/")[1].replace("-", " ").title()
             items['brand'] = offer.get("brandName", "")
             items['rating'] = float(offer.get("rating", 0))
             items['url'] = offer.get("link", "")
-            items['status'] = offer.get("status", "").lower()
+            items['status'] = offer.get("status", "").capitalize()
 
             sku = offer.get("reference", "")
             items['sku'] = sku if sku else offer.get("id", "")
@@ -60,8 +70,6 @@ class CobasiSpider(scrapy.Spider):
             items['regular_price'] = float(json_item_key.get("sellers", [])[0].get("price", 0))
             items['sub_price'] = float(json_item_key.get("sellers", [])[0].get("subscriptionPrice", 0)) #ROUNDED
             items['qty'] = int(json_item_key.get("sellers", [])[0].get("quantity", 0))
-
-            import ipdb; ipdb.set_trace()
 
             # Send items
             yield items

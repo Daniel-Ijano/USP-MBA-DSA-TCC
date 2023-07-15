@@ -5,19 +5,18 @@
 
 
 # useful for handling different item types with a single interface
+import pandas as pd
+
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from itemadapter import ItemAdapter
 
 
 class CobasiPipeline:
-    def __init__(self):
-        self.create_connection()
-        #self.create_table()
 
     def create_connection(self):
         # Set the credentials and create the connection
-        key_path = "usp-mba-dsa-tcc-4277103d9155.json" ########### FIX KEYPATH
+        key_path = "../../../usp-mba-dsa-tcc-4277103d9155.json"
 
         credentials = service_account.Credentials.from_service_account_file(
             key_path,
@@ -28,6 +27,7 @@ class CobasiPipeline:
             credentials=credentials,
             project=credentials.project_id,
         )
+        return credentials
 
     def create_table(self):
 
@@ -35,6 +35,8 @@ class CobasiPipeline:
         schema = [
             bigquery.SchemaField("collected_at", "DATE", mode="REQUIRED"),
             bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("specie", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("category", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("brand", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("rating", "FLOAT", mode="REQUIRED"),
             bigquery.SchemaField("url", "STRING", mode="REQUIRED"),
@@ -59,25 +61,13 @@ class CobasiPipeline:
         self.store_db(item)
 
     def store_db(self, item):
-        query = """
-            INSERT INTO tb_news_TEMP
-            VALUES (:publication_id, :source, :section, :publication, :collected_at, :title, :body, :url)
-        """
-        #(source, section, publication, title, body, url)
-        self.curr.execute(
-            query,
-            publication_id=item["publication_id"],
-            source=item["source"],
-            section=item["section"],
-            publication=item["publication"],
-            collected_at=item["collected_at"],
-            title=item["title"],
-            body=item["body"],
-            url=item["url"],
+        # Get the credentials
+        credentials = self.create_connection()
+
+        # Convert items into a transposed dataframe
+        item_df = pd.DataFrame.from_dict(item, orient='index').T
+        item_df.to_gbq(
+            credentials=credentials,
+            destination_table='ecommerce_offers.TESTE',
+            if_exists='append'
         )
-
-        self.conn.commit()
-
-    def __del__(self):
-        self.curr.close()
-        self.conn.close()
