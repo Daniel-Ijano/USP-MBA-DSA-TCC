@@ -11,7 +11,6 @@ from scrapy.http import Request
 class PetloveSpider(scrapy.Spider):
     name = 'petlove'
     #allowed_domains = ['petlove.com.br']
-    start_urls = ['http://petlove.com.br/']
 
     def start_requests(self):
         headers = {
@@ -49,13 +48,15 @@ class PetloveSpider(scrapy.Spider):
                     callback=self.parse
                 )
                 start_urls.append(req)
+        import ipdb; ipdb.set_trace()
+        return start_urls
 
-        for url in self.start_urls:
-            try:
-                yield scrapy.Request(url, headers=headers) #, callback=self.parse
-            except Exception:
-                print(f"DEU RUIM")
-                import ipdb; ipdb.set_trace()
+        # for url in self.start_urls:
+        #     try:
+        #         yield scrapy.Request(url, headers=headers, callback=self.parse) #, callback=self.parse
+        #     except Exception:
+        #         print(f"DEU RUIM")
+        #         import ipdb; ipdb.set_trace()
 
         # url = CATEGORIES_URL(specie="gatos", category="racoes/racao-seca", page=1)
         # yield scrapy.Request(url, headers=headers, callback=self.parse)

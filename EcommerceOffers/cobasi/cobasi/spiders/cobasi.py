@@ -31,7 +31,7 @@ class CobasiSpider(scrapy.Spider):
             for category in categories:
                 req = Request(
                     url=CATEGORIES_API(specie=specie, category=category, page=str(page)),
-                    meta={'specie': specie, 'category': category},
+                    meta={'specie': specie, 'category': category, 'page': page},
                     callback=self.parse
                 )
                 start_urls.append(req)
@@ -75,6 +75,8 @@ class CobasiSpider(scrapy.Spider):
             yield items
 
         # Pagination
-        self.page += 1
-        next_page = self.BASE_URL(category = category, page=self.page)
-        yield response.follow(next_page, callback=self.parse)
+        # next_page = response.meta.get('page') + 1
+        # url = self.CATEGORIES_API(category = category, page=self.page)
+        # yield response.follow(url, callback=self.parse)
+
+        ###################################################### FIX PAGINATION
