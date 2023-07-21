@@ -10,7 +10,7 @@ from ..support import get_data_json_response
 
 class CobasiSpider(scrapy.Spider):
     name = 'cobasi'
-    allowed_domains = ['cobasi.com.br']
+    #allowed_domains = ['cobasi.com.br']
 
     def start_requests(self):
         CATEGORIES_API = (
@@ -75,6 +75,6 @@ class CobasiSpider(scrapy.Spider):
             yield items
 
         # Pagination
-        # self.page += 1
-        # next_page = self.BASE_URL(category = category, page=self.page)
-        # yield response.follow(next_page, callback=self.parse)
+        self.page += 1
+        next_page = self.BASE_URL(category = category, page=self.page)
+        yield response.follow(next_page, callback=self.parse)

@@ -12,7 +12,7 @@ class InvestingcomSpider(scrapy.Spider):
     category_moeda = "forex-news"
     category_politica = "politics"
     BASE_URL = "https://br.investing.com/news/{category}/{page}".format
-    
+
     start_urls = [
         BASE_URL(category=category_economia, page=str(page)),
         BASE_URL(category=category_mercados, page=str(page)),
