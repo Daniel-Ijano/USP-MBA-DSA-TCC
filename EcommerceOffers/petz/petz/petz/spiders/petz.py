@@ -11,13 +11,13 @@ from scrapy.http import Request
 
 class PetzSpider(scrapy.Spider):
     name = 'petz'
-    #allowed_domains = ['petz.com.br']
+    allowed_domains = ['petz.com.br']
+
+    CATEGORIES_API = (
+        "https://www.petz.com.br/{specie}/{category}?sort=5&page={page}"
+    ).format
 
     def start_requests(self):
-        CATEGORIES_API = (
-            "https://www.petz.com.br/{specie}/{category}?sort=5&page={page}"
-        ).format
-
         page = 1
 
         # Species
@@ -30,8 +30,8 @@ class PetzSpider(scrapy.Spider):
         for specie in species:
             for category in categories:
                 req = Request(
-                    url=CATEGORIES_API(specie=specie, category=category, page=str(page)),
-                    meta={'specie': specie, 'category': category},
+                    url=self.CATEGORIES_API(specie=specie, category=category, page=str(page)),
+                    meta={'specie': specie, 'category': category, 'page': page},
                     callback=self.parse
                 )
                 start_urls.append(req)
@@ -39,15 +39,20 @@ class PetzSpider(scrapy.Spider):
 
     def parse(self, response):
         items = PetzItem()
-
-        # RESOLVER PROBLEMA DO SCROLL DOWN PARA CARREGAMENTO DE MAIS PRODUTOS
-        # len(products) ANTES x DEPOIS
+        specie = response.meta.get('specie')
+        category = response.meta.get('category')
+        page = response.meta.get('page')
 
         offers_xpath = (
             "//section[@id='listProductsShowcase']"
             "//li[@class='card-product card-product-showcase']"
         )
+
+        # End if the page does not contains any offer
         offers_list = response.xpath(offers_xpath)
+        if not offers_list or len(offers_list) == 1:
+            print("\n","\n", ">>>>> No offer found: ", response, "\n","\n")
+            return
 
         for offer in offers_list:
             json_xpath = "./textarea[@class='jsonGa']/text()"
@@ -55,8 +60,8 @@ class PetzSpider(scrapy.Spider):
 
             items['collected_at'] = datetime.today().strftime('%Y-%m-%d')
             items['source'] = "Petz"
-            items['specie'] = response.meta.get('specie').capitalize()
-            items['category'] = response.meta.get('category').split("/")[1].replace("-", " ").title()
+            items['specie'] = specie.capitalize()
+            items['category'] = category.split("/")[1].replace("-", " ").title()
 
             items['brand'] = json_data.get("brand", "")
             items['rating'] = None
@@ -79,8 +84,7 @@ class PetzSpider(scrapy.Spider):
             yield items
 
         # Pagination
-        # self.page += 1
-        # next_page = self.BASE_URL(category = category, page=self.page)
-        # yield response.follow(next_page, callback=self.parse)
-
-        ###################################################### FIX PAGINATION
+        next_page = page + 1
+        url = self.CATEGORIES_API(specie=specie, category=category, page=next_page)
+        meta={'specie': specie, 'category': category, 'page': next_page}
+        yield response.follow(url, callback=self.parse, meta=meta)

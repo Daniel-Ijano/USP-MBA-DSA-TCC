@@ -10,14 +10,14 @@ from ..support import get_data_json_response
 
 class CobasiSpider(scrapy.Spider):
     name = 'cobasi'
-    #allowed_domains = ['cobasi.com.br']
+    allowed_domains = ['cobasi.com.br']
+
+    CATEGORIES_API = (
+        "https://mid-back.cobasi.com.br/catalog/products/categories/{specie}/{category}?"
+        "orderBy=OrderByTopSaleDESC&page={page}&pageSize=50"
+    ).format
 
     def start_requests(self):
-        CATEGORIES_API = (
-            "https://mid-back.cobasi.com.br/catalog/products/categories/{specie}/{category}?"
-            "orderBy=OrderByTopSaleDESC&page={page}&pageSize=50"
-        ).format
-
         page = 1
 
         # Species
@@ -30,7 +30,7 @@ class CobasiSpider(scrapy.Spider):
         for specie in species:
             for category in categories:
                 req = Request(
-                    url=CATEGORIES_API(specie=specie, category=category, page=str(page)),
+                    url=self.CATEGORIES_API(specie=specie, category=category, page=str(page)),
                     meta={'specie': specie, 'category': category, 'page': page},
                     callback=self.parse
                 )
@@ -39,20 +39,22 @@ class CobasiSpider(scrapy.Spider):
 
     def parse(self, response):
         items = CobasiItem()
+        specie = response.meta.get('specie')
+        category = response.meta.get('category')
+        page = response.meta.get('page')
         response_json = get_data_json_response(response)
 
-        # End spider if the page does not contains any offer
+        # End if the page does not contains any offer
         offers_list = response_json.get("products", [])
         if not offers_list:
             print("\n","\n", ">>>>> No offer found: ", response, "\n","\n")
             return
 
-        # Iterating one at a time
         for offer in offers_list:
             items['collected_at'] = datetime.today().strftime('%Y-%m-%d')
             items['source'] = "Cobasi"
-            items['specie'] = response.meta.get('specie').capitalize()
-            items['category'] = response.meta.get('category').split("/")[1].replace("-", " ").title()
+            items['specie'] = specie.capitalize()
+            items['category'] = category.split("/")[1].replace("-", " ").title()
             items['brand'] = offer.get("brandName", "")
             items['rating'] = float(offer.get("rating", 0))
             items['url'] = offer.get("link", "")
@@ -75,8 +77,10 @@ class CobasiSpider(scrapy.Spider):
             yield items
 
         # Pagination
-        # next_page = response.meta.get('page') + 1
-        # url = self.CATEGORIES_API(category = category, page=self.page)
-        # yield response.follow(url, callback=self.parse)
-
-        ###################################################### FIX PAGINATION
+        if page == 2: # TEMP SOLUTION
+            next_page = page + 2
+        else:
+            next_page = page + 1
+        url = self.CATEGORIES_API(specie=specie, category=category, page=next_page)
+        meta={'specie': specie, 'category': category, 'page': next_page}
+        yield response.follow(url, callback=self.parse, meta=meta)
