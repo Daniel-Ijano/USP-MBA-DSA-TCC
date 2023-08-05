@@ -13,7 +13,6 @@ from lxml import html
 
 class PetloveSpider(scrapy.Spider):
     name = 'petlove'
-    allowed_domains = ['petlove.com.br']
 
     BASE_URL = "https://www.petlove.com.br"
 
@@ -35,6 +34,11 @@ class PetloveSpider(scrapy.Spider):
     }
 
     def start_requests(self):
+        # Dummy start request to satisfy scrapy
+        yield scrapy.Request("https://quotes.toscrape.com/")
+
+    def parse(self, response):
+        # Start Requests FOR REAL!
         page = 1
 
         # Species
@@ -63,12 +67,14 @@ class PetloveSpider(scrapy.Spider):
         )
 
         # Requests using cloudscraper
-        for url in start_urls[:1]:
+        for url in start_urls:
             response = scraper.get(url["url"], headers=self.HEADERS)
             meta={'specie': url["specie"], 'category': url["category"], 'page': url["page"]}
-            yield from self.parse(response, meta)
+            yield from self.parse_fields(response, meta)
 
-    def parse(self, response, meta):
+    def parse_fields(self, response, meta):
+        # Parsing product fields from the category page
+
         # Parsing the response
         parsed_response = html.fromstring(response.content)
         json_xpath = "//div[@class='content']//script[@type='application/javascript']/text()"
@@ -83,9 +89,9 @@ class PetloveSpider(scrapy.Spider):
         # End if the page does not contains any offer
         offers_list = response_json.get("produtos", [])
 
-
         if not offers_list:
-            print("\n","\n", ">>>>> No offer found: ", response.meta.get('response').url, "\n","\n")
+            print("\n","\n", ">>>>> No offer found: ", response.url, "\n","\n")
+            ############################################################################################################################################ FIX HERE!
             return
 
         # Create CloudScraper Instance -> Chrome browser // Windows OS // Desktop
@@ -98,7 +104,7 @@ class PetloveSpider(scrapy.Spider):
             }
         )
 
-        for offer in offers_list[:1]:
+        for offer in offers_list:
             items['collected_at'] = datetime.today().strftime('%Y-%m-%d')
             items['source'] = "Petlove"
             items['specie'] = specie.capitalize()
@@ -133,7 +139,6 @@ class PetloveSpider(scrapy.Spider):
 
             # Send items
             yield items
-            import ipdb; ipdb.set_trace()
 
             # Offer request for variants using cloudscraper
             #if offer.get("multiple_skus", ""):
@@ -149,7 +154,7 @@ class PetloveSpider(scrapy.Spider):
         url = self.CATEGORIES_URL(specie=specie, category=category, page=str(next_page))
         response = scraper.get(url, headers=self.HEADERS)
         meta={'specie': specie, 'category': category, 'page': next_page}
-        yield from self.parse(response, meta)
+        yield from self.parse_fields(response, meta)
 
     def parse_offer(self, response, meta):
         # Getting variants data
@@ -165,17 +170,30 @@ class PetloveSpider(scrapy.Spider):
         items["title"] =  f"{title} - {items['pkg_size']}"
         items["description"] = items["title"]
 
-        price_xpath =  (
-            "//div[@class='product__call-to-action-wrapper']"
-            "//button[@datatest-id='{id}']"
-            "//span[@class='button__label']/text()"
-        ).format
+        ### FOR DESKTOP ###
+        # price_xpath =  (
+        #     "//div[@class='product__call-to-action-wrapper']"
+        #     "//button[@datatest-id='{id}']"
+        #     "//span[@class='button__label']/text()"
+        # ).format
 
-        regular_price = parsed_response.xpath(price_xpath(id="add-to-cart"))[0].strip().replace(".", "")
-        items["regular_price"] = float(re.findall(r"\d+,\d+", regular_price)[0].replace(",", "."))
+        # regular_price = parsed_response.xpath(price_xpath(id="add-to-cart"))[0].strip().replace(".", "")
+        # items["regular_price"] = float(re.findall(r"\d+,\d+", regular_price)[0].replace(",", "."))
 
-        sub_price = parsed_response.xpath(price_xpath(id="add-to-recurrences"))[0].strip().replace(".", "")
-        items["sub_price"] = float(re.findall(r"\d+,\d+", sub_price)[0].replace(",", "."))
+        # sub_price = parsed_response.xpath(price_xpath(id="add-to-recurrences"))[0].strip().replace(".", "")
+        # items["sub_price"] = float(re.findall(r"\d+,\d+", sub_price)[0].replace(",", "."))
+
+        ### FOR MOBILE ###
+        price_xpath = "//section[@class='floating-buttons']//span[@class='button__label']"
+        price_list = parsed_response.xpath(price_xpath)
+        prices = []
+        for price in price_list:
+            price = price.text.strip().replace(".", "")
+            price = float(re.findall(r"\d+,\d+", price)[0].replace(",", "."))
+            prices.append(price)
+
+        items["regular_price"] = max(prices)
+        items["sub_price"] = min(prices)
 
         # Send items
         yield items
