@@ -1,8 +1,10 @@
 import json
+import requests
 import scrapy
 
 from datetime import datetime
 from ..items import PetzItem
+from lxml import html
 from scrapy.http import Request
 
 # cd USP-MBA-DSA-TCC/EcommerceOffers/petz/petz
@@ -27,7 +29,7 @@ class PetzSpider(scrapy.Spider):
         categories = ["racao/racao-seca", "racao/racao-umida"]
 
         start_urls = []
-        for specie in species:
+        for specie in species[:1]:
             for category in categories:
                 req = Request(
                     url=self.CATEGORIES_API(specie=specie, category=category, page=str(page)),
@@ -64,24 +66,45 @@ class PetzSpider(scrapy.Spider):
             items['category'] = category.split("/")[1].replace("-", " ").title()
 
             items['brand'] = json_data.get("brand", "")
-            items['rating'] = None
             items['url'] = "https://www.petz.com.br" + offer.xpath("./a/@href").get()
             status_xpath = "./div/meta[@itemprop='itemCondition']/@content"
             items['status'] = offer.xpath(status_xpath).get()
 
-            sku = json_data.get("sku", "")
-            items['sku'] = sku if sku else json_data.get("id", "")
+            variants = offer.xpath("//@product-variations-text").get()
+            if variants:
+                print("VARIANTS!!")
+                import ipdb; ipdb.set_trace()
+                offer_response = html.fromstring(requests.get(items['url']).content.decode("utf-8"))
+                script_content = offer_response.xpath('//script[contains(., "var chaordicProduct")]//text()')[0].split("};")
+                abc = script_content[1].replace("var chaordicProduct = ", "").replace("\r", "").replace("\n", "").replace("\t", "")
+                start_index = abc.find('"details": {"')
+                end_index = abc.rfind('"extraInfo": {')
+                LALALA = abc[:start_index] + abc[end_index:]+"}"
+                json_data = json.loads(LALALA).get("product", "")
 
-            items['title'] = json_data.get("name", "")
-            items['description'] = None
-            items['pkg_size'] = None ################################################################# IMPORTANTE!
+                # Extract JSON data from the script content
+                start_index = script_content.find("var chaordicProduct = {")
+                end_index = script_content.rfind("};") #+ 1
+                json_data = script_content[start_index:end_index]
 
-            items['regular_price'] = float(json_data.get("price", 0))
-            items['sub_price'] = float(json_data.get("priceForSubs", 0))
-            items['qty'] = None
+                #yield response.follow(url=items['url'], callback=self.parse_offer, meta=meta)
+                #yield Request(url=items['url'], callback=self.parse_offer, meta=meta)
 
-            # Send items
-            yield items
+            else:
+                sku = json_data.get("sku", "")
+                items['sku'] = sku if sku else json_data.get("id", "")
+
+                items['title'] = json_data.get("name", "")
+                items['regular_price'] = float(json_data.get("price", 0))
+                items['sub_price'] = float(json_data.get("priceForSubs", 0))
+
+                items['pkg_size'] = None ################################################################# IMPORTANTE!
+                items['rating'] = None
+                items['description'] = None
+                items['qty'] = None
+
+                # Send items
+                yield items
 
         # Pagination
         next_page = page + 1
