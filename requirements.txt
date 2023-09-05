@@ -4,3 +4,4 @@ pandas==2.1.0
 pandas-gbq==0.19.2
 google-cloud-bigquery==3.11.4
 google-auth==2.22.0
+cloudscraper==1.2.71

@@ -69,7 +69,7 @@ class PetloveSpider(scrapy.Spider):
         # Requests using cloudscraper
         for url in start_urls:
             response = scraper.get(url["url"], headers=self.HEADERS)
-            meta={'specie': url["specie"], 'category': url["category"], 'page': url["page"]}
+            meta = {'specie': url["specie"], 'category': url["category"], 'page': url["page"]}
             yield from self.parse_fields(response, meta)
 
     def parse_fields(self, response, meta):
@@ -90,8 +90,7 @@ class PetloveSpider(scrapy.Spider):
         offers_list = response_json.get("produtos", [])
 
         if not offers_list:
-            print("\n","\n", ">>>>> No offer found: ", response.url, "\n","\n")
-            ############################################################################################################################################ FIX HERE!
+            print("\n","\n", ">>>>> No offer found: ", response.url, "\n", "\n")
             return
 
         # Create CloudScraper Instance -> Chrome browser // Windows OS // Desktop
@@ -153,7 +152,7 @@ class PetloveSpider(scrapy.Spider):
         next_page = page + 1
         url = self.CATEGORIES_URL(specie=specie, category=category, page=str(next_page))
         response = scraper.get(url, headers=self.HEADERS)
-        meta={'specie': specie, 'category': category, 'page': next_page}
+        meta = {'specie': specie, 'category': category, 'page': next_page}
         yield from self.parse_fields(response, meta)
 
     def parse_offer(self, response, meta):
@@ -167,33 +166,24 @@ class PetloveSpider(scrapy.Spider):
         items["pkg_size"] = meta["variant"]["pkg_size"]
 
         title = parsed_response.xpath("//title/text()")[0].replace(" | Petlove", "")
-        items["title"] =  f"{title} - {items['pkg_size']}"
+        items["title"] = f"{title} - {items['pkg_size']}"
         items["description"] = items["title"]
 
-        ### FOR DESKTOP ###
-        # price_xpath =  (
-        #     "//div[@class='product__call-to-action-wrapper']"
-        #     "//button[@datatest-id='{id}']"
-        #     "//span[@class='button__label']/text()"
-        # ).format
-
-        # regular_price = parsed_response.xpath(price_xpath(id="add-to-cart"))[0].strip().replace(".", "")
-        # items["regular_price"] = float(re.findall(r"\d+,\d+", regular_price)[0].replace(",", "."))
-
-        # sub_price = parsed_response.xpath(price_xpath(id="add-to-recurrences"))[0].strip().replace(".", "")
-        # items["sub_price"] = float(re.findall(r"\d+,\d+", sub_price)[0].replace(",", "."))
-
-        ### FOR MOBILE ###
+        # For mobile version of the page
         price_xpath = "//section[@class='floating-buttons']//span[@class='button__label']"
         price_list = parsed_response.xpath(price_xpath)
         prices = []
-        for price in price_list:
-            price = price.text.strip().replace(".", "")
-            price = float(re.findall(r"\d+,\d+", price)[0].replace(",", "."))
-            prices.append(price)
-
-        items["regular_price"] = max(prices)
-        items["sub_price"] = min(prices)
+        for price_element in price_list:
+            price = price_element.text.strip().replace(".", "")
+            try:
+                price = float(re.findall(r"\d+,\d+", price)[0].replace(",", "."))
+                prices.append(price)
+                items["regular_price"] = max(prices)
+                items["sub_price"] = min(prices)
+            except Exception:
+                # No price available ("Avise-me quando chegar")
+                items["regular_price"] = None
+                items["sub_price"] = None
 
         # Send items
         yield items

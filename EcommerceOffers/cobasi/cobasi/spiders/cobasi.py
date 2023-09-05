@@ -20,10 +20,10 @@ class CobasiSpider(scrapy.Spider):
     def start_requests(self):
         page = 1
 
-        # Especies
+        # Species
         species = ["gatos", "cachorro"]
 
-        # Categorias
+        # Categories
         categories = ["racao/racao-seca", "racao/racao-umida"]
 
         start_urls = []
@@ -44,7 +44,7 @@ class CobasiSpider(scrapy.Spider):
         page = response.meta.get('page')
         response_json = get_data_json_response(response)
 
-        # Encerra caso a página não contenha nenhuma oferta
+        # End if the page does not contains any offer
         offers_list = response_json.get("products", [])
         if not offers_list:
             print("\n","\n", ">>>>> No offer found: ", response, "\n","\n")
@@ -73,10 +73,10 @@ class CobasiSpider(scrapy.Spider):
             items['sub_price'] = float(json_item_key.get("sellers", [])[0].get("subscriptionPrice", 0)) #ROUNDED
             items['qty'] = int(json_item_key.get("sellers", [])[0].get("quantity", 0))
 
-            # Enviar items
+            # Send items
             yield items
 
-        # Paginação
+        # Pagination
         if page == 2: # TEMP SOLUTION
             next_page = page + 2
         else:
