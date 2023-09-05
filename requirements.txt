@@ -1,0 +1,6 @@
+scrapy==2.10.1
+scrapy_user_agents==0.1.1
+pandas==2.1.0
+pandas-gbq==0.19.2
+google-cloud-bigquery==3.11.4
+google-auth==2.22.0
