@@ -31,6 +31,7 @@ class PetzSpider(scrapy.Spider):
             "//section[@id='listProductsShowcase']"
             "//li[@class='card-product card-product-showcase']"
         ),
+        "product_id": "//meta[@itemprop='sku']/@content",
         "rating": (
             "//div[@itemprop='aggregateRating']"
             "//span[@itemprop='ratingValue']/text()"
@@ -81,11 +82,15 @@ class PetzSpider(scrapy.Spider):
             items['brand'] = json_data.get("brand", "")
             items['url'] = "https://www.petz.com.br" + offer.xpath("./a/@href").get()
 
-            time.sleep(2)
-            offer_response = requests.get(items['url'], timeout=3)
+            time.sleep(1)
+            offer_response = requests.get(items['url'], timeout=2)
             parsed_response = html.fromstring(offer_response.text)
             rating = parsed_response.xpath(self.XPATHS["rating"])
+            product_id = parsed_response.xpath(self.XPATHS["product_id"])
             variants = parsed_response.xpath(self.XPATHS["variants"])
+
+            if not variants:
+                variants = product_id
 
             for variant in variants:
                 variant_response = requests.get(self.VARIANT_API(product_id=variant))
