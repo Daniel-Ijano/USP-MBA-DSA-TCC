@@ -1,6 +1,7 @@
 import json
 import requests
 import scrapy
+import time
 
 from datetime import datetime
 from ..items import PetzItem
@@ -15,9 +16,27 @@ class PetzSpider(scrapy.Spider):
     name = 'petz'
     allowed_domains = ['petz.com.br']
 
-    CATEGORIES_API = (
+    CATEGORIES_URL = (
         "https://www.petz.com.br/{specie}/{category}?sort=5&page={page}"
     ).format
+
+    VARIANT_API = (
+        "https://www.petz.com.br/sendAnalyticsProductViewVariations_Loja.html"
+        "?produtoId={product_id}"
+    ).format
+
+    XPATHS = {
+        "json_data": "./textarea[@class='jsonGa']/text()",
+        "offers_list": (
+            "//section[@id='listProductsShowcase']"
+            "//li[@class='card-product card-product-showcase']"
+        ),
+        "rating": (
+            "//div[@itemprop='aggregateRating']"
+            "//span[@itemprop='ratingValue']/text()"
+        ),
+        "variants": "//div[@class='variacao-item']/@data-idvariacao"
+    }
 
     def start_requests(self):
         page = 1
@@ -29,10 +48,10 @@ class PetzSpider(scrapy.Spider):
         categories = ["racao/racao-seca", "racao/racao-umida"]
 
         start_urls = []
-        for specie in species[:1]:
+        for specie in species:
             for category in categories:
                 req = Request(
-                    url=self.CATEGORIES_API(specie=specie, category=category, page=str(page)),
+                    url=self.CATEGORIES_URL(specie=specie, category=category, page=str(page)),
                     meta={'specie': specie, 'category': category, 'page': page},
                     callback=self.parse
                 )
@@ -45,20 +64,14 @@ class PetzSpider(scrapy.Spider):
         category = response.meta.get('category')
         page = response.meta.get('page')
 
-        offers_xpath = (
-            "//section[@id='listProductsShowcase']"
-            "//li[@class='card-product card-product-showcase']"
-        )
-
         # End if the page does not contains any offer
-        offers_list = response.xpath(offers_xpath)
+        offers_list = response.xpath(self.XPATHS["offers_list"])
         if not offers_list or len(offers_list) == 1:
-            print("\n","\n", ">>>>> No offer found: ", response, "\n","\n")
+            print("\n", "\n", ">>>>> No offer found: ", response, "\n", "\n")
             return
 
         for offer in offers_list:
-            json_xpath = "./textarea[@class='jsonGa']/text()"
-            json_data = json.loads(offer.xpath(json_xpath).get().strip())
+            json_data = json.loads(offer.xpath(self.XPATHS["json_data"]).get().strip())
 
             items['collected_at'] = datetime.today().strftime('%Y-%m-%d')
             items['source'] = "Petz"
@@ -67,40 +80,31 @@ class PetzSpider(scrapy.Spider):
 
             items['brand'] = json_data.get("brand", "")
             items['url'] = "https://www.petz.com.br" + offer.xpath("./a/@href").get()
-            status_xpath = "./div/meta[@itemprop='itemCondition']/@content"
-            items['status'] = offer.xpath(status_xpath).get()
 
-            variants = offer.xpath("//@product-variations-text").get()
-            if variants:
-                print("VARIANTS!!")
-                import ipdb; ipdb.set_trace()
-                offer_response = html.fromstring(requests.get(items['url']).content.decode("utf-8"))
-                script_content = offer_response.xpath('//script[contains(., "var chaordicProduct")]//text()')[0].split("};")
-                abc = script_content[1].replace("var chaordicProduct = ", "").replace("\r", "").replace("\n", "").replace("\t", "")
-                start_index = abc.find('"details": {"')
-                end_index = abc.rfind('"extraInfo": {')
-                LALALA = abc[:start_index] + abc[end_index:]+"}"
-                json_data = json.loads(LALALA).get("product", "")
+            time.sleep(2)
+            offer_response = requests.get(items['url'], timeout=3)
+            parsed_response = html.fromstring(offer_response.text)
+            rating = parsed_response.xpath(self.XPATHS["rating"])
+            variants = parsed_response.xpath(self.XPATHS["variants"])
 
-                # Extract JSON data from the script content
-                start_index = script_content.find("var chaordicProduct = {")
-                end_index = script_content.rfind("};") #+ 1
-                json_data = script_content[start_index:end_index]
+            for variant in variants:
+                variant_response = requests.get(self.VARIANT_API(product_id=variant))
+                variant_json = variant_response.json()
 
-                #yield response.follow(url=items['url'], callback=self.parse_offer, meta=meta)
-                #yield Request(url=items['url'], callback=self.parse_offer, meta=meta)
+                # Getting items data
+                status = variant_json.get("available", None)
+                items['status'] = "Disponível" if status else "Indisponível"
 
-            else:
-                sku = json_data.get("sku", "")
-                items['sku'] = sku if sku else json_data.get("id", "")
+                sku = variant_json.get("sku", None)
+                items['sku'] = sku if sku else variant_json.get("product_id", None)
 
-                items['title'] = json_data.get("name", "")
-                items['regular_price'] = float(json_data.get("price", 0))
-                items['sub_price'] = float(json_data.get("priceForSubs", 0))
+                items['pkg_size'] = variant_json.get("variant", None)
+                items['rating'] = float(rating[0]) if rating else None
 
-                items['pkg_size'] = None ################################################################# IMPORTANTE!
-                items['rating'] = None
-                items['description'] = None
+                items['title'] = variant_json.get("name", None)
+                items['description'] = items['title']
+                items['regular_price'] = float(variant_json.get("price", 0))
+                items['sub_price'] = items['regular_price'] * 0.9  # Workaround
                 items['qty'] = None
 
                 # Send items
@@ -108,6 +112,6 @@ class PetzSpider(scrapy.Spider):
 
         # Pagination
         next_page = page + 1
-        url = self.CATEGORIES_API(specie=specie, category=category, page=next_page)
-        meta={'specie': specie, 'category': category, 'page': next_page}
+        url = self.CATEGORIES_URL(specie=specie, category=category, page=next_page)
+        meta = {'specie': specie, 'category': category, 'page': next_page}
         yield response.follow(url, callback=self.parse, meta=meta)
