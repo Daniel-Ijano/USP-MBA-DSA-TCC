@@ -104,7 +104,7 @@ class PetzSpider(scrapy.Spider):
                 items['title'] = variant_json.get("name", None)
                 items['description'] = items['title']
                 items['regular_price'] = float(variant_json.get("price", 0))
-                items['sub_price'] = items['regular_price'] * 0.9  # Workaround
+                items['sub_price'] = round(items['regular_price'] * 0.9, 2)
                 items['qty'] = None
 
                 # Send items
