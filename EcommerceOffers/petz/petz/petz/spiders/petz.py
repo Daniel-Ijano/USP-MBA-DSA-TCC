@@ -103,7 +103,8 @@ class PetzSpider(scrapy.Spider):
                 sku = variant_json.get("sku", None)
                 items['sku'] = sku if sku else variant_json.get("product_id", None)
 
-                items['pkg_size'] = variant_json.get("variant", None)
+                pkg_size = variant_json.get("variant", None)
+                items['pkg_size'] = pkg_size if pkg_size != "" else None
                 items['rating'] = float(rating[0]) if rating else None
 
                 items['title'] = variant_json.get("name", None)
