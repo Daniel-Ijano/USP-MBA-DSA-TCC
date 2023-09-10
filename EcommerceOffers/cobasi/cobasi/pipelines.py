@@ -30,7 +30,7 @@ class CobasiPipeline:
 
     def create_table(self):
 
-        table_id = "usp-mba-dsa-tcc.ecommerce_offers.TESTE"
+        table_id = "usp-mba-dsa-tcc.ecommerce_offers.tb_raw_pet_food"
         schema = [
             bigquery.SchemaField("collected_at", "DATE", mode="REQUIRED"),
             bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
@@ -67,6 +67,6 @@ class CobasiPipeline:
         item_df = pd.DataFrame.from_dict(item, orient='index').T
         item_df.to_gbq(
             credentials=credentials,
-            destination_table='ecommerce_offers.TESTE',
+            destination_table='ecommerce_offers.tb_raw_pet_food',
             if_exists='append'
         )
