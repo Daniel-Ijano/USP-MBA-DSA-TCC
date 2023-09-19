@@ -6,3 +6,4 @@ google-cloud-bigquery==3.11.4
 google-auth==2.22.0
 cloudscraper==1.2.71
 lxml==4.9.3
+pypiwin32==223
