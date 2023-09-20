@@ -29,9 +29,6 @@ class CobasiPipeline:
         return credentials
 
     def process_item(self, item, spider):
-        self.store_db(item)
-
-    def store_db(self, item):
         # Get the credentials
         credentials = self.create_connection()
 

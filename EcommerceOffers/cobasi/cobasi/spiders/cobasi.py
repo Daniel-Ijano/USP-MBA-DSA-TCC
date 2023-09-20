@@ -72,7 +72,9 @@ class CobasiSpider(scrapy.Spider):
             items['regular_price'] = float(json_item_key.get("sellers", [])[0].get("price", 0))
             items['sub_price'] = float(json_item_key.get("sellers", [])[0].get("subscriptionPrice", 0))
             items['qty'] = int(json_item_key.get("sellers", [])[0].get("quantity", 0))
-            items['img'] = json_item_key.get("images", [])[0].get("url", None)
+
+            img = json_item_key.get("images", [])[0].get("url", None)
+            items['img'] = "https:" + img if img else None
 
             # Send items
             yield items

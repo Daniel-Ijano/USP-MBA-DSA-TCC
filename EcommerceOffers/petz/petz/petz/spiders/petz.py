@@ -112,6 +112,7 @@ class PetzSpider(scrapy.Spider):
                 items['regular_price'] = float(variant_json.get("price", 0))
                 items['sub_price'] = round(items['regular_price'] * 0.9, 2)
                 items['qty'] = None
+                items['img'] = variant_json.get("image_url", None)
 
                 # Send items
                 yield items

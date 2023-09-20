@@ -24,3 +24,4 @@ class PetloveItem(scrapy.Item):
     regular_price = scrapy.Field()
     sub_price = scrapy.Field()
     qty = scrapy.Field()
+    img = scrapy.Field()

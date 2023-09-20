@@ -118,6 +118,7 @@ class PetloveSpider(scrapy.Spider):
             items['qty'] = None
             items['title'] = offer.get("nome", "")
             items['description'] = items['title']
+            items['img'] = offer.get("figura", None)
 
             variants = []
             skus = offer.get("extras_skus", [])
@@ -168,6 +169,11 @@ class PetloveSpider(scrapy.Spider):
         title = parsed_response.xpath("//title/text()")[0].replace(" | Petlove", "")
         items["title"] = f"{title} - {items['pkg_size']}"
         items["description"] = items["title"]
+
+        # Keep the image from the offer page if possible (better resolution)
+        img_xpath = "//img[@class='main__content' and @datatest-id='main-img']/@src"
+        img = parsed_response.xpath(img_xpath)[0]
+        items['img'] = img if img else items['img']
 
         # For mobile version of the page
         price_xpath = "//section[@class='floating-buttons']//span[@class='button__label']"
