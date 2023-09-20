@@ -28,34 +28,6 @@ class CobasiPipeline:
         )
         return credentials
 
-    def create_table(self):
-
-        table_id = "usp-mba-dsa-tcc.ecommerce_offers.tb_raw_pet_food"
-        schema = [
-            bigquery.SchemaField("collected_at", "DATE", mode="REQUIRED"),
-            bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("specie", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("category", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("brand", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("rating", "FLOAT", mode="REQUIRED"),
-            bigquery.SchemaField("url", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("sku", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("title", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("description", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("pkg_size", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("regular_price", "FLOAT", mode="REQUIRED"),
-            bigquery.SchemaField("sub_price", "FLOAT", mode="REQUIRED"),
-            bigquery.SchemaField("qty", "INTEGER", mode="REQUIRED"),
-        ]
-
-        table = bigquery.Table(table_id, schema=schema)
-        table = self.client.create_table(table)
-
-        print(
-            "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
-        )
-
     def process_item(self, item, spider):
         self.store_db(item)
 

@@ -68,16 +68,17 @@ class CobasiSpider(scrapy.Spider):
 
             json_item_key = offer.get("items", [])[0]
             items['description'] = json_item_key.get("completeName", "")
-            items['pkg_size'] = json_item_key.get("name", "") # AVALIAR REGEX
+            items['pkg_size'] = json_item_key.get("name", "") #
             items['regular_price'] = float(json_item_key.get("sellers", [])[0].get("price", 0))
-            items['sub_price'] = float(json_item_key.get("sellers", [])[0].get("subscriptionPrice", 0)) #ROUNDED
+            items['sub_price'] = float(json_item_key.get("sellers", [])[0].get("subscriptionPrice", 0))
             items['qty'] = int(json_item_key.get("sellers", [])[0].get("quantity", 0))
+            items['img'] = json_item_key.get("images", [])[0].get("url", None)
 
             # Send items
             yield items
 
         # Pagination
-        if page == 2: # TEMP SOLUTION
+        if page == 2: #
             next_page = page + 2
         else:
             next_page = page + 1
