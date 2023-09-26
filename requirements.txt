@@ -7,5 +7,6 @@ google-auth==2.22.0
 cloudscraper==1.2.71
 lxml==4.9.3
 pypiwin32==223
+tkhtmlview==0.2.0
 
 nltk==3.8.1
