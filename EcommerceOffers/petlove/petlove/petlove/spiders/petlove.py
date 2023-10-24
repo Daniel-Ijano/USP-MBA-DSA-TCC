@@ -72,6 +72,21 @@ class PetloveSpider(scrapy.Spider):
             meta = {'specie': url["specie"], 'category': url["category"], 'page': url["page"]}
             yield from self.parse_fields(response, meta)
 
+            # yield scrapy.Request(
+            #     some_url,
+            #     callback=self.parse_fields,
+            #     meta={'specie': url["specie"], 'category': url["category"], 'page': url["page"]}
+            # )
+
+            # OU https://pypi.org/project/scrapy-cloudflare-middleware/
+
+            #https://pypi.org/project/cfscrape/
+            # import cfscrape
+            # def start_requests(self):
+            #     for url in self.start_urls:
+            #         token, agent = cfscrape.get_tokens(url, 'Your prefarable user agent, _optional_')
+            #         yield Request(url=url, cookies=token, headers={'User-Agent': agent})
+
     def parse_fields(self, response, meta):
         # Parsing product fields from the category page
 

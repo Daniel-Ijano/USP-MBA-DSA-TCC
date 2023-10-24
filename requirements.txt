@@ -9,4 +9,5 @@ lxml==4.9.3
 pypiwin32==223
 tkhtmlview==0.2.0
 
+cfscrape==2.1.1
 nltk==3.8.1

@@ -54,7 +54,7 @@ def send_emails(df):
             </div>
 
             <br><strong><a href={df['URL'][row]} style="display: block; text-align: center; background-color: #01878e; padding: 10px; 
-                            font-family: sans-serif; font-size: 16px; max-width: 500px; text-decoration: none; color: white;">IR PARA {df['Loja'][row].upper()}</a></strong>
+                            font-family: sans-serif; font-size: 16px; max-width: 500px; text-decoration: none; color: white;">IR PARA A LOJA</a></strong>
             """
             mail.Send()
 
