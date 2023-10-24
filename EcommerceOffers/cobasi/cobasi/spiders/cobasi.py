@@ -80,10 +80,7 @@ class CobasiSpider(scrapy.Spider):
             yield items
 
         # Pagination
-        if page == 2: #
-            next_page = page + 2
-        else:
-            next_page = page + 1
+        next_page = page + 1
         url = self.CATEGORIES_API(specie=specie, category=category, page=next_page)
         meta={'specie': specie, 'category': category, 'page': next_page}
         yield response.follow(url, callback=self.parse, meta=meta)
